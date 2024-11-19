@@ -1,13 +1,14 @@
 const express = require("express");
 const connectdb = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
-// const tutorRoutes = require("./routes/tutorRoutes");  // Uncomment when needed
-// const assignmentRoutes = require("./routes/assignmentRoutes");  // Uncomment when needed
-// const projectRoutes = require("./routes/projectRoutes");  // Uncomment when needed
+const passport = require("passport");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const { initializePassport } = require("./middleware/passportConfig");
 require("dotenv").config();
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 
@@ -15,31 +16,51 @@ const app = express();
 connectdb();
 
 // Middleware for parsing JSON, enabling CORS, and improving security
-app.use(express.json()); // Parses incoming requests with JSON payloads
+app.use(express.json());
 app.use(cors()); // Enables Cross-Origin Resource Sharing
 app.use(helmet()); // Adds security-related HTTP headers
-app.use(morgan("dev")); // Logs HTTP requests to the console
+app.use(morgan("dev"));
+
+// Initialize Passport
+app.use(passport.initialize()); // <-- Initialize Passport middleware
 
 // API Routes
 app.use("/api/user", userRoutes);
-// app.use("/api/tutor", tutorRoutes);  // Uncomment when needed
-// app.use("/api/assignment", assignmentRoutes);  // Uncomment when needed
-// app.use("/api/project", projectRoutes);  // Uncomment when needed
+
+// Function to log all routes in the application
+function logRoutes() {
+  console.log("Routes in the application:");
+
+  // Iterate through all middlewares in app._router.stack
+  app._router.stack.forEach((middleware) => {
+    if (middleware.route) {
+      // Direct route handler, log exact path
+      console.log(
+        `${middleware.route.stack[0].method.toUpperCase()} ${
+          middleware.route.path
+        }`
+      );
+    } else if (middleware.name === "router") {
+      // Nested router, check its stack for nested routes
+      middleware.handle.stack.forEach((handler) => {
+        if (handler.route) {
+          console.log(
+            `${handler.route.stack[0].method.toUpperCase()} ${
+              handler.route.path
+            }`
+          );
+        }
+      });
+    }
+  });
+}
+
+// Log routes after all middleware and routes are defined
+logRoutes();
 
 // Handle 404 errors for undefined routes
 app.use((req, res, next) => {
   res.status(404).json({ error: "Route not found" });
-});
-
-// Error handling middleware for catching all errors
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    error:
-      process.env.NODE_ENV === "development"
-        ? err.message
-        : "Something went wrong!",
-  });
 });
 
 // Start the server
