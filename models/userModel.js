@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
     default: [],
   },
   phoneNumber: { type: Number },
-  location: { type: String },
+  imageUrl: { type: String, default: null }, // Field to store the image URL
 });
 
 // Pre-save middleware to ensure hashtags

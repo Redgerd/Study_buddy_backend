@@ -8,7 +8,6 @@ const connectdb = async () => {
       useUnifiedTopology: true,
     });
 
-    // Log connection success, but avoid logging in test environments
     if (process.env.NODE_ENV !== "test") {
       console.log("MongoDB connected");
     }

@@ -21,10 +21,25 @@ exports.validateChangePassword = [
     .withMessage("New password must be at least 6 characters long"),
 ];
 
-exports.validateUpdates = [
-  body("email").optional().isEmail().withMessage("Must be a valid email"),
-  body("phoneNumber")
-    .optional()
-    .isNumeric()
-    .withMessage("Phone number must be numeric"),
-];
+exports.validateUpdates = (req, res, next) => {
+  const { name, userName, phoneNumber, imageUrl } = req.body;
+
+  // Validate fields if they exist in the request body
+  if (name && typeof name !== "string") {
+    return res.status(400).json({ message: "Invalid name" });
+  }
+  if (userName && typeof userName !== "string") {
+    return res.status(400).json({ message: "Invalid username" });
+  }
+  if (
+    phoneNumber &&
+    (typeof phoneNumber !== "number" || phoneNumber.toString().length < 10)
+  ) {
+    return res.status(400).json({ message: "Invalid phone number" });
+  }
+  if (imageUrl && typeof imageUrl !== "string") {
+    return res.status(400).json({ message: "Invalid image URL" });
+  }
+
+  next(); // Proceed to the next middleware or controller
+};

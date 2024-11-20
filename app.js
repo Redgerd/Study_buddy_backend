@@ -1,6 +1,7 @@
 const express = require("express");
 const connectdb = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
+const passwordRoutes = require("./routes/passwordRoutes");
 const passport = require("passport");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -26,6 +27,7 @@ app.use(passport.initialize()); // <-- Initialize Passport middleware
 
 // API Routes
 app.use("/api/user", userRoutes);
+app.use("/api/auth", passwordRoutes);
 
 // Function to log all routes in the application
 function logRoutes() {

@@ -5,10 +5,10 @@ const router = express.Router();
 const {
   registerUser,
   loginUser,
-  changePassword,
   updateUser,
-  getAllUsers, // Import getAllUsers
+  getAllUsers,
 } = require("../controllers/userController");
+
 const {
   validateSignUp,
   validateLogin,
@@ -23,21 +23,12 @@ router.post("/login", validateLogin, loginUser);
 // Example route to get all users (No authentication required)
 router.get("/all", getAllUsers); // This should be /api/users/all
 
-// Protected route using Passport.js JWT authentication
-// Only authenticated users can change their password
-router.put(
-  "/change-password",
-  passport.authenticate("jwt", { session: false }),
-  validateChangePassword,
-  changePassword
-);
-
-// You can protect other routes similarly:
+// Only authenticated users can update user details
 router.put(
   "/update",
-  passport.authenticate("jwt", { session: false }),
-  validateUpdates,
-  updateUser
+  passport.authenticate("jwt", { session: false }), // Use Passport JWT authentication
+  validateUpdates, // Validate input data
+  updateUser // Controller to handle updating the user
 );
 
 module.exports = router;

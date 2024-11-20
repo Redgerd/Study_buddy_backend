@@ -1,27 +1,68 @@
-const passport = require("passport");
-const { Strategy: JwtStrategy, ExtractJwt } = require("passport-jwt");
-const User = require("../models/userModel.js"); // Adjust the path to your User model
-require("dotenv").config();
+const bcrypt = require("bcrypt");
+const nodemailer = require("nodemailer");
+const User = require("../models/userModel"); // Assuming you have a User model
 
-// JWT strategy options
-const options = {
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // Extract JWT from Authorization header
-  secretOrKey: process.env.JWT_SECRET, // JWT secret key (make sure this matches your signing key)
-};
-
-// JWT strategy
-const jwtStrategy = new JwtStrategy(options, (jwt_payload, done) => {
-  User.findById(jwt_payload.id) // Search for the user by ID
-    .then((user) => {
-      if (user) {
-        return done(null, user); // Successfully authenticated, attach user to req.user
-      }
-      return done(null, false); // If user not found, authentication failed
-    })
-    .catch((err) => done(err, false)); // Handle errors
+// Nodemailer Transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail", // Use your email provider's service
+  auth: {
+    user: process.env.EMAIL_USER, // Your email address
+    pass: process.env.EMAIL_PASS, // Your email password or app password
+  },
 });
 
-// Use the strategy in Passport
-passport.use(jwtStrategy);
+// Reusable function to send emails
+const sendEmail = async (to, subject, text) => {
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER, // Sender address
+      to, // Recipient address
+      subject, // Subject of the email
+      text, // Content of the email
+    });
+    console.log(`Email sent to ${to}`);
+  } catch (error) {
+    console.error("Error sending email:", error);
+  }
+};
 
-module.exports = passport;
+exports.changePassword = async (req, res) => {
+  try {
+    const { id } = req.user; // Assuming user is authenticated
+    const { oldPassword, newPassword } = req.body;
+
+    console.log("Received request to change password:", { id });
+
+    // Find the user by ID
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Compare the old password with the stored password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Old password is incorrect" });
+    }
+
+    // Hash the new password and save it
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    // Send email notification about the password change
+    const emailSubject = "Password Changed Successfully";
+    const emailText = `Hello ${user.name},\n\nYour password has been successfully changed. If this wasn't you, please contact support immediately.\n\nBest regards,\nYour App Team`;
+
+    // Send the email to the user
+    await sendEmail(user.email, emailSubject, emailText);
+
+    // Return success response
+    res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Error during password change:", error);
+    res.status(500).json({
+      message: "Server error",
+      error: error.message || error,
+    });
+  }
+};
