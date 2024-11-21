@@ -12,7 +12,6 @@ const {
 const {
   validateSignUp,
   validateLogin,
-  validateChangePassword,
   validateUpdates,
 } = require("../validation/userValidation");
 
@@ -24,11 +23,6 @@ router.post("/login", validateLogin, loginUser);
 router.get("/all", getAllUsers); // This should be /api/users/all
 
 // Only authenticated users can update user details
-router.put(
-  "/update",
-  passport.authenticate("jwt", { session: false }), // Use Passport JWT authentication
-  validateUpdates, // Validate input data
-  updateUser // Controller to handle updating the user
-);
+router.put("/update", validateUpdates, updateUser);
 
 module.exports = router;

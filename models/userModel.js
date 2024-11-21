@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema({
   },
   phoneNumber: { type: Number },
   imageUrl: { type: String, default: null }, // Field to store the image URL
+  bio: { type: String, default: null }, // Added bio field
 });
 
 // Pre-save middleware to ensure hashtags

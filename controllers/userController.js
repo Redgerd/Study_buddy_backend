@@ -74,31 +74,32 @@ const loginUser = async (req, res) => {
 // Update user details
 const updateUser = async (req, res) => {
   try {
-    const { userId } = req.user; // Assuming user is authenticated
-    const { name, userName, phoneNumber, imageUrl } = req.body;
+    const { name, userName, phoneNumber, imageUrl, bio } = req.body;
 
-    // Validation (if needed)
-    if (phoneNumber && isNaN(phoneNumber)) {
-      return res.status(400).json({ message: "Invalid phone number" });
-    }
-
-    const updateData = {};
-    if (name) updateData.name = name.trim();
-    if (userName) updateData.userName = userName.trim();
-    if (phoneNumber) updateData.phoneNumber = phoneNumber;
-    if (imageUrl) updateData.imageUrl = imageUrl.trim(); // Ensure image URL is properly formatted
-
-    const user = await User.findByIdAndUpdate(userId, updateData, {
-      new: true, // Return the updated document
-    });
+    // Ensure the user exists
+    const user = await User.findOne({ email: req.body.email });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json({ message: "User updated successfully", user });
+    // Update only the fields provided in the request body
+    if (name) user.name = name;
+    if (userName) user.userName = userName;
+    if (phoneNumber) user.phoneNumber = phoneNumber;
+    if (imageUrl) user.imageUrl = imageUrl;
+    if (bio) user.bio = bio;
+
+    // Save the updated user document
+    await user.save();
+
+    return res.status(200).json({
+      message: "User updated successfully",
+      user: user,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error });
+    console.error("Error updating user:", error);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -117,15 +118,9 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// Placeholder for changePassword if not yet implemented
-const changePassword = async (req, res) => {
-  res.status(501).json({ message: "Not implemented yet" });
-};
-
 module.exports = {
   registerUser,
   loginUser,
-  changePassword,
   updateUser,
   getAllUsers,
 };

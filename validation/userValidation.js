@@ -21,25 +21,32 @@ exports.validateChangePassword = [
     .withMessage("New password must be at least 6 characters long"),
 ];
 
-exports.validateUpdates = (req, res, next) => {
-  const { name, userName, phoneNumber, imageUrl } = req.body;
+exports.validateUpdates = [
+  // Validate name if it's provided
+  body("name")
+    .optional() // This field is optional, the user doesn't need to update it
+    .isString()
+    .withMessage("Name must be a string")
+    .trim(), // Remove extra spaces
 
-  // Validate fields if they exist in the request body
-  if (name && typeof name !== "string") {
-    return res.status(400).json({ message: "Invalid name" });
-  }
-  if (userName && typeof userName !== "string") {
-    return res.status(400).json({ message: "Invalid username" });
-  }
-  if (
-    phoneNumber &&
-    (typeof phoneNumber !== "number" || phoneNumber.toString().length < 10)
-  ) {
-    return res.status(400).json({ message: "Invalid phone number" });
-  }
-  if (imageUrl && typeof imageUrl !== "string") {
-    return res.status(400).json({ message: "Invalid image URL" });
-  }
+  // Validate userName if it's provided
+  body("userName")
+    .optional() // This field is optional
+    .isString()
+    .withMessage("User name must be a string")
+    .trim(), // Remove extra spaces
 
-  next(); // Proceed to the next middleware or controller
-};
+  // Validate phoneNumber if it's provided
+  body("phoneNumber")
+    .optional() // This field is optional
+    .matches(/^\+92\d{10}$/) // Match phone numbers starting with +92 followed by exactly 10 digits
+    .withMessage("Invalid phone number format for Pakistan"),
+
+  // Validate imageUrl if it's provided
+  body("imageUrl")
+    .optional() // This field is optional
+    .isURL()
+    .withMessage("Invalid image URL format"),
+
+  // Add any other validations you may need
+];
