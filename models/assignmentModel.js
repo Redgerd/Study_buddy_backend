@@ -11,16 +11,16 @@ const assignmentSchema = new mongoose.Schema({
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User", // Assuming you have a User model
+    ref: "User",
     required: true,
   },
   filePath: {
     type: String,
-    required: true, // File path is mandatory
+    required: true,
   },
-  createdAt: {
+  deadline: {
     type: Date,
-    default: Date.now,
+    required: true,
   },
 });
 
