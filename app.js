@@ -4,7 +4,7 @@ const passport = require("passport");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const { initializePassport } = require("./middleware/passportConfig");
+const { initializePassport } = require("./middleware/passport");
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");

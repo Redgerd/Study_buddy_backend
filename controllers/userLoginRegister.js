@@ -71,56 +71,7 @@ const loginUser = async (req, res) => {
   }
 };
 
-// Update user details
-const updateUser = async (req, res) => {
-  try {
-    const { name, userName, phoneNumber, imageUrl, bio } = req.body;
-
-    // Ensure the user exists
-    const user = await User.findOne({ email: req.body.email });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Update only the fields provided in the request body
-    if (name) user.name = name;
-    if (userName) user.userName = userName;
-    if (phoneNumber) user.phoneNumber = phoneNumber;
-    if (imageUrl) user.imageUrl = imageUrl;
-    if (bio) user.bio = bio;
-
-    // Save the updated user document
-    await user.save();
-
-    return res.status(200).json({
-      message: "User updated successfully",
-      user: user,
-    });
-  } catch (error) {
-    console.error("Error updating user:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-};
-
-// Get all users
-const getAllUsers = async (req, res) => {
-  try {
-    const users = await User.find();
-
-    if (users.length === 0) {
-      return res.status(404).json({ message: "No users found" });
-    }
-
-    res.json({ message: "Users fetched successfully", users });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error });
-  }
-};
-
 module.exports = {
   registerUser,
   loginUser,
-  updateUser,
-  getAllUsers,
 };

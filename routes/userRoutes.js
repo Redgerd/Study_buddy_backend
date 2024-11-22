@@ -2,12 +2,13 @@ const express = require("express");
 const passport = require("passport");
 const router = express.Router();
 
+const { registerUser, loginUser } = require("../controllers/userLoginRegister");
+
 const {
-  registerUser,
-  loginUser,
+  getUserData,
   updateUser,
   getAllUsers,
-} = require("../controllers/userController");
+} = require("../controllers/userDataUpdateGet");
 
 const {
   validateSignUp,
@@ -19,10 +20,24 @@ const {
 router.post("/register", validateSignUp, registerUser);
 router.post("/login", validateLogin, loginUser);
 
-// Example route to get all users (No authentication required)
-router.get("/all", getAllUsers); // This should be /api/users/all
+// Protected routes (requires authentication)
+router.get(
+  "/all",
+  passport.authenticate("jwt", { session: false }),
+  getAllUsers
+);
+router.get(
+  "/:userId",
+  passport.authenticate("jwt", { session: false }),
+  getUserData
+);
 
-// Only authenticated users can update user details
-router.put("/update", validateUpdates, updateUser);
+// Update user details (allow only the user to update their own details)
+router.put(
+  "/update",
+  passport.authenticate("jwt", { session: false }),
+  validateUpdates,
+  updateUser
+);
 
 module.exports = router;
