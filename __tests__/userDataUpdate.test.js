@@ -1,6 +1,9 @@
 const request = require("supertest");
 const app = require("../app"); // Adjust the path to your app
 const User = require("../models/userModel"); // Adjust the path to your User model
+const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
 
 let token;
 let testUser;
@@ -21,67 +24,58 @@ beforeAll(async () => {
   token = loginResponse.body.token; // Assuming token is returned in the response
 });
 
-describe("Update User Data", () => {
-  it("should update the user's information", async () => {
-    const updatedData = { name: "Updated User", email: "updated@example.com" };
+describe("Update User Profile Image", () => {
+  it("should upload a profile image successfully", async () => {
+    const imagePath = path.join(__dirname, "testImage.jpg"); // Path to a test image file
 
+    // Create a mock image file (You can manually place a test image in the 'testImage.jpg' path)
     const res = await request(app)
-      .put(`/api/user/update`)
+      .put("/api/user/update-image") // Adjust the route if needed
       .set("Authorization", `Bearer ${token}`)
-      .send(updatedData);
+      .attach("image", imagePath); // 'image' is the field name for file uploads
 
     expect(res.status).toBe(200);
-    expect(res.body.user.name).toBe(updatedData.name);
-    expect(res.body.user.email).toBe(updatedData.email);
+    expect(res.body.message).toBe("Profile image updated successfully");
+    expect(res.body.user.image).toMatch(/uploads\/images\/\d+\.jpg$/); // Check if the path to the uploaded image is correct
+
+    // Optionally, check if the file exists in the directory
+    const fileExists = fs.existsSync(
+      path.join(__dirname, "uploads", "images", res.body.user.image)
+    );
+    expect(fileExists).toBe(true);
   });
 
-  it("should return an error if no token is provided", async () => {
-    const updatedData = { name: "Updated User", email: "updated@example.com" };
+  it("should return an error if no image is provided", async () => {
+    const res = await request(app)
+      .put("/api/user/update-image") // Adjust the route if needed
+      .set("Authorization", `Bearer ${token}`);
 
-    const res = await request(app).put(`/api/user/update`).send(updatedData);
-
-    expect(res.status).toBe(401); // Unauthorized
-    expect(res.body.message).toBe("Authorization required");
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("No image file uploaded");
   });
 
-  it("should return an error if the token is invalid", async () => {
-    const updatedData = { name: "Updated User", email: "updated@example.com" };
+  it("should return an error for an invalid file type", async () => {
+    const invalidImagePath = path.join(__dirname, "invalidImage.txt"); // A non-image file
 
     const res = await request(app)
-      .put(`/api/user/update`)
-      .set("Authorization", "Bearer invalidtoken")
-      .send(updatedData);
-
-    expect(res.status).toBe(401); // Unauthorized
-    expect(res.body.message).toBe("Invalid token");
-  });
-
-  it("should return an error if updating with missing fields", async () => {
-    const updatedData = { name: "Updated User" }; // Missing email
-
-    const res = await request(app)
-      .put(`/api/user/update`)
+      .put("/api/user/update-image") // Adjust the route if needed
       .set("Authorization", `Bearer ${token}`)
-      .send(updatedData);
+      .attach("image", invalidImagePath); // 'image' is the field name for file uploads
 
-    expect(res.status).toBe(400); // Bad Request
-    expect(res.body.message).toBe("Missing required fields");
-  });
-
-  it("should return an error if the user tries to update role to an unauthorized value", async () => {
-    const updatedData = { role: "admin" }; // Assuming 'admin' is an unauthorized role for this user
-
-    const res = await request(app)
-      .put(`/api/user/update`)
-      .set("Authorization", `Bearer ${token}`)
-      .send(updatedData);
-
-    expect(res.status).toBe(403); // Forbidden
-    expect(res.body.message).toBe("Unauthorized to change role");
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe(
+      "Invalid file type. Only image files are allowed"
+    );
   });
 });
 
 afterAll(async () => {
   // Clean up test user after all tests
   await User.deleteMany({ email: "testuser@example.com" });
+
+  // Optionally, delete uploaded test images (if any)
+  const filePath = path.join(__dirname, "uploads", "images", "testImage.jpg");
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
 });

@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
+const fs = require("fs");
 
 const allowedFields = [
   "username",
@@ -29,19 +30,34 @@ const getAllUsers = async (req, res) => {
 // Update user data
 const updateUser = async (req, res) => {
   try {
-    // Ensure we have at least one field to update
     const updateData = {};
+
+    // Process other fields to update
     Object.keys(req.body).forEach((key) => {
       if (allowedFields.includes(key)) {
         updateData[key] = req.body[key];
       }
     });
 
+    // Process uploaded image
+    if (req.file) {
+      // Convert the image to Base64
+      const imageBuffer = fs.readFileSync(req.file.path);
+      const base64Image = imageBuffer.toString("base64");
+
+      // Store the image in the database
+      updateData.profileImage = base64Image;
+
+      // Clean up temporary file
+      fs.unlinkSync(req.file.path);
+    }
+
+    // Ensure there's at least one field to update
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ message: "No valid fields to update" });
     }
 
-    // Find the user and update their data
+    // Find and update the user
     const user = await User.findByIdAndUpdate(req.user.id, updateData, {
       new: true,
     });

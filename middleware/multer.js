@@ -1,4 +1,3 @@
-// middleware/multer.js
 const multer = require("multer");
 const path = require("path");
 
@@ -12,10 +11,11 @@ const storage = multer.diskStorage({
   },
 });
 
-// Accept only specific file types (optional)
+// Accept specific file types, including images
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = [".txt", ".pdf", ".docx"]; // Adjust allowed file types as needed
-  const fileExt = path.extname(file.originalname);
+  const allowedTypes = [".txt", ".pdf", ".docx", ".jpg", ".jpeg", ".png"];
+  const fileExt = path.extname(file.originalname).toLowerCase();
+
   if (allowedTypes.includes(fileExt)) {
     cb(null, true);
   } else {
@@ -26,7 +26,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // Optional: set a limit for file size (5MB here)
+  limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size to 5MB
 });
 
 module.exports = upload;
