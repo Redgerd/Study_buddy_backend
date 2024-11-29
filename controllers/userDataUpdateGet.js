@@ -4,7 +4,7 @@ const User = require("../models/userModel");
 const fs = require("fs");
 
 const allowedFields = [
-  "username",
+  "userName",
   "image",
   "name",
   "bio",
@@ -39,13 +39,13 @@ const updateUser = async (req, res) => {
       }
     });
 
-    // Process uploaded image
+    // Process uploaded image if available
     if (req.file) {
       // Convert the image to Base64
       const imageBuffer = fs.readFileSync(req.file.path);
       const base64Image = imageBuffer.toString("base64");
 
-      // Store the image in the database
+      // Store the image in the database (you might want to store it as a URL path in a production app)
       updateData.profileImage = base64Image;
 
       // Clean up temporary file
@@ -57,15 +57,16 @@ const updateUser = async (req, res) => {
       return res.status(400).json({ message: "No valid fields to update" });
     }
 
-    // Find and update the user
+    // Find and update the user document
     const user = await User.findByIdAndUpdate(req.user.id, updateData, {
-      new: true,
+      new: true, // Returns the updated user document
     });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Return updated user
     res.status(200).json({ user });
   } catch (error) {
     console.error("Error updating user:", error);
@@ -73,21 +74,32 @@ const updateUser = async (req, res) => {
   }
 };
 
-// Get user data (protected route)
+// Get user data (protected route) - Fetch specified fields
 const getUserData = async (req, res) => {
   try {
-    const userId = req.user.id; // Assuming user is authenticated and user ID is in req.user
+    const userId = req.user.id;
 
-    // Fetch the user data, returning only the allowed fields
-    const user = await User.findById(userId, allowedFields.join(" "));
+    // Fetch the user data, including all required fields
+    const user = await User.findById(
+      userId,
+      "userName image name bio email totalSpent" // Correct field name
+    );
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Construct the response with the correct fields
     res.status(200).json({
       message: "User data fetched successfully",
-      user,
+      user: {
+        userName: user.userName, // Correct field name
+        image: user.image,
+        name: user.name,
+        bio: user.bio,
+        email: user.email,
+        totalSpent: user.totalSpent,
+      },
     });
   } catch (error) {
     console.error("Error fetching user data:", error);
@@ -96,6 +108,8 @@ const getUserData = async (req, res) => {
       .json({ message: "Internal server error", error: error.message });
   }
 };
+
+module.exports = { getUserData };
 
 module.exports = {
   getAllUsers,
