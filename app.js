@@ -8,9 +8,12 @@ const { initializePassport } = require("./middleware/passport");
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
+const socketIo = require("socket.io");
+const http = require("http");
 const userRoutes = require("./routes/userRoutes");
 const assignmentRoutes = require("./routes/assignmentRoute");
 const passwordRoutes = require("./routes/passwordRoutes");
+const chatRoutes = require("./routes/chatRoutes");
 
 const app = express();
 
@@ -27,6 +30,29 @@ app.use(passport.initialize());
 app.use("/api/user", userRoutes);
 app.use("/api/auth", passwordRoutes);
 app.use("/api/assignments", assignmentRoutes);
+app.use("/api/chats", chatRoutes);
+
+// Socket.io for real-time communication
+const server = http.createServer(app);
+const io = socketIo(server);
+
+io.on("connection", (socket) => {
+  console.log(`User connected: ${socket.id}`);
+
+  socket.on("join", (userId) => {
+    socket.join(userId);
+    console.log(`User ${userId} joined`);
+  });
+
+  socket.on("sendMessage", async ({ sender, receiver, message }) => {
+    const newMessage = { sender, receiver, message, timestamp: new Date() };
+    io.to(receiver).emit("receiveMessage", newMessage);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected");
+  });
+});
 
 // Handle 404 errors for undefined routes
 app.use((req, res, next) => {
