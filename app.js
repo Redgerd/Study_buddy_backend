@@ -36,21 +36,38 @@ app.use("/api/chats", chatRoutes);
 const server = http.createServer(app);
 const io = socketIo(server);
 
+/// Handle socket connections
 io.on("connection", (socket) => {
   console.log(`User connected: ${socket.id}`);
 
-  socket.on("join", (userId) => {
-    socket.join(userId);
-    console.log(`User ${userId} joined`);
+  // User joins a chat room
+  socket.on("joinRoom", async (room) => {
+    socket.join(room);
+    console.log(`User ${socket.id} joined room: ${room}`);
+
+    // Load previous messages
+    const messages = await Message.find({ room }).sort("timestamp");
+    socket.emit("previousMessages", messages);
   });
 
-  socket.on("sendMessage", async ({ sender, receiver, message }) => {
-    const newMessage = { sender, receiver, message, timestamp: new Date() };
-    io.to(receiver).emit("receiveMessage", newMessage);
+  // Handle new chat messages
+  socket.on("chatMessage", async ({ room, message, user }) => {
+    const newMessage = new Message({ room, user, message });
+    try {
+      await newMessage.save();
+      io.to(room).emit("chatMessage", {
+        user,
+        message,
+        timestamp: newMessage.timestamp,
+      });
+    } catch (error) {
+      console.error("Error saving message:", error);
+    }
   });
 
+  // Handle user disconnect
   socket.on("disconnect", () => {
-    console.log("User disconnected");
+    console.log(`User disconnected: ${socket.id}`);
   });
 });
 

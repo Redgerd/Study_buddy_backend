@@ -1,24 +1,11 @@
 const express = require("express");
-const passport = require("passport");
+const { getMessages, saveMessage } = require("../controllers/chatController");
 const router = express.Router();
 
-const {
-  getChatHistory,
-  sendMessage,
-} = require("../controllers/chatController");
+// Get all messages for a specific room
+router.get("/:room", getMessages);
 
-// Route for sending a message (protected)
-router.post(
-  "/send",
-  passport.authenticate("jwt", { session: false }),
-  sendMessage
-);
-
-// Route for fetching chat history (protected)
-router.get(
-  "/:userId1/:userId2",
-  passport.authenticate("jwt", { session: false }),
-  getChatHistory
-);
+// Save a new message
+router.post("/", saveMessage);
 
 module.exports = router;
