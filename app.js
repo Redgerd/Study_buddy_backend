@@ -10,6 +10,7 @@ const fs = require("fs");
 const path = require("path");
 const socketIo = require("socket.io");
 const http = require("http");
+// Routes
 const userRoutes = require("./routes/userRoutes");
 const assignmentRoutes = require("./routes/assignmentRoute");
 const passwordRoutes = require("./routes/passwordRoutes");
@@ -23,7 +24,6 @@ app.use(express.json());
 app.use(cors());
 app.use(helmet());
 app.use(morgan("dev"));
-
 app.use(passport.initialize());
 
 // API Routes
