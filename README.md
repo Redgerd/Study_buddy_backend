@@ -30,7 +30,6 @@
 * ⚙️ Modular, scalable codebase
 * ✅ Input validation & error handling
 
----
 
 ## 🛠 Technologies Used
 
